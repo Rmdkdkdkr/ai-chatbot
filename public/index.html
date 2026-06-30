@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SeSAC Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --lime: #aaee00;
+      --lime-dark: #8fcc00;
+      --lime-soft: #eefacc;
+      --bg: #f2f3ee;
+      --card: #ffffff;
+      --border: #e2e4da;
+      --text: #1a1a12;
+      --muted: #7a7d6e;
+      --sidebar-w: 260px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "Noto Sans KR", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+    }
+
+    /* ── 사이드바 ── */
+    .sidebar {
+      width: var(--sidebar-w);
+      min-height: 100vh;
+      background: var(--card);
+      border-right: 1.5px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      padding: 24px 16px;
+      position: fixed;
+      top: 0; left: 0; bottom: 0;
+      z-index: 100;
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 4px 8px 20px;
+      cursor: pointer;
+    }
+    .logo-icon {
+      width: 36px; height: 36px;
+      background: var(--lime);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.2rem;
+    }
+    .logo-text {
+      font-size: 1.4rem;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      line-height: 1.1;
+    }
+    .logo-text sup { font-size: 0.55rem; vertical-align: super; font-weight: 600; color: var(--muted); }
+    .logo-sub {
+      font-size: 0.68rem;
+      font-weight: 600;
+      color: var(--muted);
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    nav { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 11px 14px;
+      border-radius: 12px;
+      font-size: 0.93rem;
+      font-weight: 500;
+      color: var(--muted);
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+      text-decoration: none;
+      position: relative;
+      user-select: none;
+    }
+    .nav-item:hover { background: var(--bg); color: var(--text); }
+    .nav-item.active { background: var(--lime-soft); color: var(--text); font-weight: 700; }
+    .nav-item .icon { font-size: 1.1rem; width: 22px; text-align: center; }
+    .nav-item .badge {
+      font-size: 0.65rem;
+      background: var(--lime);
+      color: #000;
+      padding: 2px 6px;
+      border-radius: 20px;
+      font-weight: 700;
+      margin-left: 4px;
+    }
+    .nav-item .lock {
+      margin-left: auto;
+      font-size: 0.85rem;
+      opacity: 0.4;
+    }
+
+    .nav-divider { height: 1px; background: var(--border); margin: 10px 0; }
+
+    .task-card {
+      background: var(--lime-soft);
+      border: 1.5px solid var(--lime);
+      border-radius: 14px;
+      padding: 14px;
+      margin: 12px 0;
+    }
+    .task-card .task-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      background: var(--lime);
+      color: #000;
+      padding: 2px 8px;
+      border-radius: 20px;
+      display: inline-block;
+      margin-bottom: 10px;
+    }
+    .task-card .task-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    .task-card .task-item .task-icon { font-size: 1rem; }
+    .task-card .task-item .task-check {
+      margin-left: auto;
+      width: 20px; height: 20px;
+      border: 2px solid #aaa;
+      border-radius: 50%;
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .task-card .task-item:hover .task-check { border-color: var(--lime-dark); }
+
+    .help-btn {
+      background: var(--lime);
+      color: #000;
+      border: none;
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+      width: 100%;
+      text-align: left;
+      transition: background 0.15s;
+    }
+    .help-btn:hover { background: var(--lime-dark); }
+
+    /* ── 메인 ── */
+    .main {
+      margin-left: var(--sidebar-w);
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    /* 탑바 */
+    .topbar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px 28px;
+      background: var(--card);
+      border-bottom: 1.5px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    .topbar-title { font-size: 1.3rem; font-weight: 800; flex-shrink: 0; }
+    .topbar-actions { display: flex; align-items: center; gap: 8px; }
+    .btn-outline {
+      display: flex; align-items: center; gap: 6px;
+      padding: 8px 16px;
+      border: 1.5px solid var(--border);
+      border-radius: 24px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      background: transparent;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+      color: var(--text);
+      white-space: nowrap;
+    }
+    .btn-outline:hover { border-color: var(--lime-dark); background: var(--lime-soft); }
+    .btn-lime {
+      padding: 8px 16px;
+      background: var(--lime);
+      border: 1.5px solid var(--lime);
+      border-radius: 24px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.15s;
+      color: #000;
+      white-space: nowrap;
+    }
+    .btn-lime:hover { background: var(--lime-dark); }
+
+    .topbar-right {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .theme-toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.82rem;
+      color: var(--muted);
+      cursor: pointer;
+      user-select: none;
+    }
+    .toggle-switch {
+      width: 40px; height: 22px;
+      background: var(--lime);
+      border-radius: 20px;
+      position: relative;
+      transition: background 0.2s;
+    }
+    .toggle-switch::after {
+      content: "";
+      width: 16px; height: 16px;
+      background: #fff;
+      border-radius: 50%;
+      position: absolute;
+      top: 3px; left: 3px;
+      transition: transform 0.2s;
+    }
+    .toggle-switch.off { background: #d1d5db; }
+    .toggle-switch.off::after { transform: translateX(0); }
+    .toggle-switch.on::after { transform: translateX(18px); }
+
+    .user-chip {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 0.88rem; font-weight: 600;
+      cursor: pointer;
+    }
+    .user-avatar {
+      width: 34px; height: 34px;
+      background: var(--lime-soft);
+      border: 2px solid var(--lime);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem;
+    }
+
+    /* 컨텐츠 */
+    .content { padding: 24px 28px; display: flex; flex-direction: column; gap: 20px; }
+
+    /* 배너 */
+    .banner {
+      background: var(--lime);
+      border-radius: 16px;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      border: 1.5px solid var(--lime-dark);
+    }
+    .banner-text { flex: 1; font-size: 0.92rem; font-weight: 600; }
+    .banner-text span { font-weight: 800; }
+    .banner-icon { font-size: 1.4rem; }
+    .banner-btns { display: flex; gap: 8px; flex-shrink: 0; }
+    .btn-black {
+      padding: 9px 20px;
+      background: #000;
+      color: #fff;
+      border: none;
+      border-radius: 24px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .btn-black:hover { opacity: 0.8; }
+    .btn-white {
+      padding: 9px 20px;
+      background: #fff;
+      color: #000;
+      border: 1.5px solid #000;
+      border-radius: 24px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .btn-white:hover { background: #f5f5f5; }
+
+    /* 두 컬럼 */
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    @media (max-width: 900px) { .row { grid-template-columns: 1fr; } }
+
+    /* 카드 공통 */
+    .card {
+      background: var(--card);
+      border: 1.5px solid var(--border);
+      border-radius: 18px;
+      padding: 22px;
+    }
+    .card-title {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* 수입 카드 */
+    .earnings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .earnings-item {
+      background: var(--lime-soft);
+      border: 1.5px solid var(--lime);
+      border-radius: 14px;
+      padding: 16px;
+      cursor: pointer;
+      transition: transform 0.15s;
+    }
+    .earnings-item:hover { transform: translateY(-2px); }
+    .earnings-item .label { font-size: 0.78rem; font-weight: 600; color: var(--muted); margin-bottom: 8px; }
+    .earnings-item .value {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 1.8rem; font-weight: 800;
+    }
+    .coin-icon {
+      width: 28px; height: 28px;
+      background: var(--lime);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.9rem;
+      border: 2px solid var(--lime-dark);
+    }
+    .earnings-item .uptime { font-size: 0.75rem; color: var(--muted); margin-top: 6px; }
+
+    /* 네트워크 카드 */
+    .network-card { display: flex; flex-direction: column; gap: 14px; }
+    .network-status {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px;
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      font-size: 0.88rem;
+      font-weight: 500;
+    }
+    .status-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .status-dot.red { background: #ef4444; box-shadow: 0 0 6px #ef444488; }
+    .status-dot.green { background: #22c55e; box-shadow: 0 0 6px #22c55e88; }
+    .network-card p { font-size: 0.85rem; color: var(--muted); }
+    .btn-connect {
+      padding: 14px;
+      background: var(--lime);
+      border: none;
+      border-radius: 12px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      letter-spacing: 0.5px;
+      transition: background 0.15s;
+      width: 100%;
+    }
+    .btn-connect:hover { background: var(--lime-dark); }
+
+    /* ── 플로팅 챗 버튼 ── */
+    .chat-float {
+      position: fixed;
+      bottom: 32px;
+      right: 32px;
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 10px;
+    }
+
+    /* 항상 보이는 티저 말풍선 */
+    .chat-teaser {
+      background: #1a1a12;
+      color: #e8ead0;
+      font-size: 0.83rem;
+      font-weight: 500;
+      padding: 10px 14px;
+      border-radius: 16px 16px 4px 16px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+      white-space: nowrap;
+      position: relative;
+      animation: teaserIn 0.5s cubic-bezier(.34,1.56,.64,1) 0.8s both;
+      cursor: pointer;
+    }
+    .chat-teaser::after {
+      content: "";
+      position: absolute;
+      bottom: -6px; right: 18px;
+      border: 6px solid transparent;
+      border-top-color: #1a1a12;
+      border-bottom: none;
+    }
+    @keyframes teaserIn {
+      from { opacity: 0; transform: translateY(12px) scale(0.9); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .chat-teaser .teaser-dot {
+      display: inline-block;
+      width: 7px; height: 7px;
+      background: var(--lime);
+      border-radius: 50%;
+      margin-right: 6px;
+      vertical-align: middle;
+      animation: pulse 1.8s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: 0.5; transform: scale(0.7); }
+    }
+    .chat-teaser.hidden { display: none; }
+
+    /* 전체 팝업 */
+    .chat-popup {
+      background: #1a1a12;
+      color: #fff;
+      border-radius: 20px 20px 4px 20px;
+      padding: 18px 20px;
+      width: 272px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.22);
+      animation: popIn 0.22s cubic-bezier(.34,1.56,.64,1);
+      display: none;
+    }
+    .chat-popup.open { display: block; }
+    @keyframes popIn {
+      from { opacity: 0; transform: scale(0.88) translateY(8px); }
+      to   { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    .chat-popup-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .chat-popup-avatar {
+      width: 38px; height: 38px;
+      background: var(--lime);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.15rem;
+      flex-shrink: 0;
+    }
+    .chat-popup-name { font-size: 0.92rem; font-weight: 700; }
+    .chat-popup-status { font-size: 0.72rem; color: var(--lime); margin-top: 2px; }
+    .chat-popup-close {
+      margin-left: auto;
+      background: none; border: none;
+      color: #666; font-size: 1rem;
+      cursor: pointer; line-height: 1;
+      padding: 2px 4px;
+    }
+    .chat-popup-close:hover { color: #fff; }
+    .chat-popup-msg {
+      font-size: 0.85rem;
+      line-height: 1.65;
+      color: #d8dac0;
+      margin-bottom: 14px;
+    }
+    .chat-popup-input {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #2e2e20;
+      border-radius: 24px;
+      padding: 9px 9px 9px 15px;
+      cursor: pointer;
+      transition: background 0.15s;
+      text-decoration: none;
+    }
+    .chat-popup-input:hover { background: #3c3c28; }
+    .chat-popup-input span { flex: 1; font-size: 0.82rem; color: #7a7c60; }
+    .chat-popup-send {
+      width: 30px; height: 30px;
+      background: var(--lime);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .chat-popup-send svg { width: 14px; height: 14px; fill: #1a1a12; }
+
+    /* 버튼 */
+    .chat-bubble-btn {
+      width: 58px; height: 58px;
+      background: var(--lime);
+      border: 2.5px solid var(--lime-dark);
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.5rem;
+      box-shadow: 0 4px 20px rgba(170,238,0,0.4);
+      transition: transform 0.15s, box-shadow 0.15s;
+      position: relative;
+    }
+    .chat-bubble-btn:hover { transform: scale(1.1); box-shadow: 0 6px 28px rgba(170,238,0,0.55); }
+    .chat-bubble-btn .notif {
+      position: absolute; top: -3px; right: -3px;
+      width: 16px; height: 16px;
+      background: #ef4444;
+      border-radius: 50%;
+      border: 2px solid var(--bg);
+      font-size: 0.6rem; color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800;
+    }
+
+    /* 통계 카드 */
+    .stats-card { grid-column: 1 / -1; }
+    .stats-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    .refresh-btn {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 0.82rem; font-weight: 600;
+      color: var(--muted);
+      background: none; border: none;
+      cursor: pointer;
+      transition: color 0.15s;
+    }
+    .refresh-btn:hover { color: var(--text); }
+    .chart-area { position: relative; height: 180px; }
+    .chart-svg { width: 100%; height: 100%; overflow: visible; }
+    .chart-legend {
+      display: flex; align-items: center; gap: 20px;
+      flex-wrap: wrap;
+      margin-top: 14px;
+    }
+    .legend-item {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 0.78rem; color: var(--muted); cursor: pointer;
+    }
+    .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+    /* 모달 */
+    .modal-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.4);
+      z-index: 999;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: #fff;
+      border-radius: 20px;
+      padding: 32px;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+      animation: modalIn 0.2s ease;
+    }
+    @keyframes modalIn {
+      from { transform: scale(0.92); opacity: 0; }
+      to   { transform: scale(1); opacity: 1; }
+    }
+    .modal h2 { font-size: 1.2rem; font-weight: 800; margin-bottom: 8px; }
+    .modal p { font-size: 0.88rem; color: var(--muted); margin-bottom: 22px; line-height: 1.6; }
+    .modal-input {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      font-size: 0.9rem;
+      font-family: inherit;
+      outline: none;
+      margin-bottom: 12px;
+      transition: border-color 0.15s;
+    }
+    .modal-input:focus { border-color: var(--lime-dark); }
+    .modal-btns { display: flex; gap: 8px; margin-top: 4px; }
+    .modal-btns .btn-black { flex: 1; text-align: center; }
+    .modal-close {
+      position: absolute; top: 16px; right: 18px;
+      background: none; border: none;
+      font-size: 1.4rem; cursor: pointer;
+      color: var(--muted);
+    }
+    .modal { position: relative; }
+  </style>
+</head>
+<body>
+
+  <!-- 사이드바 -->
+  <aside class="sidebar">
+    <div class="logo" onclick="showModal('about')">
+      <div class="logo-icon">🌱</div>
+      <div>
+        <div class="logo-text">SeSAC<sup>™</sup></div>
+        <div class="logo-sub">코인 네트워크</div>
+      </div>
+    </div>
+
+    <nav>
+      <a class="nav-item active" href="/">
+        <span class="icon">⊞</span> Dashboard
+      </a>
+      <a class="nav-item" href="#" onclick="showModal('rewards'); return false;">
+        <span class="icon">🎁</span> 리워드
+        <span class="badge">New</span>
+        <span class="lock">🔒</span>
+      </a>
+      <a class="nav-item" href="/chat">
+        <span class="icon">🤖</span> AI 챗봇
+        <span class="badge">AI</span>
+      </a>
+      <a class="nav-item" href="#" onclick="showModal('download'); return false;">
+        <span class="icon">⬇</span> 앱 다운로드
+      </a>
+      <a class="nav-item" href="#" onclick="showModal('store'); return false;">
+        <span class="icon">🛍</span> 스토어
+        <span class="lock">🔒</span>
+      </a>
+
+      <div class="nav-divider"></div>
+
+      <div class="task-card">
+        <div class="task-label">New Task</div>
+        <div class="task-item" onclick="showModal('install')">
+          <span class="task-icon">💻</span>
+          <span>SeSAC<br/>데스크탑 앱 설치</span>
+          <div class="task-check" id="taskCheck"></div>
+        </div>
+      </div>
+
+      <button class="help-btn" onclick="showModal('help')">🚀 도움말 투어 시작</button>
+
+      <div class="nav-divider"></div>
+
+      <a class="nav-item" href="#" onclick="showModal('logout'); return false;">
+        <span class="icon">↩</span> 로그아웃
+      </a>
+    </nav>
+  </aside>
+
+  <!-- 메인 -->
+  <main class="main">
+
+    <!-- 탑바 -->
+    <header class="topbar">
+      <div class="topbar-title">Dashboard</div>
+      <div class="topbar-actions">
+        <button class="btn-outline" onclick="showModal('grow')">ℹ 수익 늘리기</button>
+        <button class="btn-lime" onclick="showModal('share')">👥 친구와 공유</button>
+      </div>
+      <div class="topbar-right">
+        <label class="theme-toggle" onclick="toggleTheme()">
+          <div class="toggle-switch on" id="themeToggle"></div>
+          라이트 테마
+        </label>
+        <div class="user-chip" onclick="showModal('profile')">
+          <span>안녕하세요, 게스트!</span>
+          <div class="user-avatar">🌱</div>
+        </div>
+      </div>
+    </header>
+
+    <!-- 컨텐츠 -->
+    <div class="content">
+
+      <!-- 배너 -->
+      <div class="banner">
+        <span class="banner-icon">🌐</span>
+        <div class="banner-text">
+          가입하고 진행 상황을 저장하세요! 즉시 <span>10,000 SeSAC 포인트</span>를 받을 수 있어요.
+        </div>
+        <div class="banner-btns">
+          <button class="btn-black" onclick="showModal('signup')">회원가입</button>
+          <button class="btn-white" onclick="showModal('signin')">로그인</button>
+        </div>
+      </div>
+
+      <!-- 수입 + 네트워크 -->
+      <div class="row">
+
+        <!-- 수입 카드 -->
+        <div class="card">
+          <div class="card-title">💰 수익 현황</div>
+          <div class="earnings-grid">
+            <div class="earnings-item" onclick="showModal('earnings')">
+              <div class="label">총 수익</div>
+              <div class="value">
+                <div class="coin-icon">🌱</div>
+                <span id="totalEarnings">0</span>
+              </div>
+              <div class="uptime">업타임: 0일, 0시간, 0분</div>
+            </div>
+            <div class="earnings-item" onclick="showModal('earnings')">
+              <div class="label">오늘의 수익</div>
+              <div class="value">
+                <div class="coin-icon">🌱</div>
+                <span id="todayEarnings">0</span>
+              </div>
+              <div class="uptime">업타임: 0일, 0시간, 0분</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 네트워크 카드 -->
+        <div class="card network-card">
+          <div class="card-title">📶 네트워크 연결</div>
+          <div class="network-status">
+            <div class="status-dot red" id="statusDot"></div>
+            <span id="statusText">연결된 네트워크가 없습니다.</span>
+          </div>
+          <p>SeSAC 네트워크에 연결하여 포인트를 획득하세요.</p>
+          <button class="btn-connect" onclick="connectNetwork()">네트워크 연결하기</button>
+        </div>
+      </div>
+
+      <!-- 포인트 현황 카드 (전체 너비) -->
+      <div class="card">
+        <div class="card-title">🏆 SeSAC 포인트 현황</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:4px;">
+          <div onclick="showModal('points')" style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:var(--bg);border-radius:12px;cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='var(--lime-soft)'" onmouseout="this.style.background='var(--bg)'">
+            <span style="font-size:0.88rem;font-weight:600;">🔵 네트워크 포인트</span>
+            <span style="font-weight:800;">0</span>
+          </div>
+          <div onclick="showModal('points')" style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:var(--bg);border-radius:12px;cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='var(--lime-soft)'" onmouseout="this.style.background='var(--bg)'">
+            <span style="font-size:0.88rem;font-weight:600;">🟢 업타임 포인트</span>
+            <span style="font-weight:800;">0</span>
+          </div>
+          <div onclick="showModal('points')" style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:var(--bg);border-radius:12px;cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='var(--lime-soft)'" onmouseout="this.style.background='var(--bg)'">
+            <span style="font-size:0.88rem;font-weight:600;">⭐ 추천 보너스</span>
+            <span style="font-weight:800;">0</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 통계 차트 -->
+      <div class="card stats-card">
+        <div class="stats-header">
+          <div class="card-title" style="margin:0">📊 수익 통계</div>
+          <button class="refresh-btn" onclick="renderChart()">새로고침 ↻</button>
+        </div>
+        <div class="chart-area">
+          <svg class="chart-svg" id="chartSvg"></svg>
+        </div>
+        <div class="chart-legend">
+          <div class="legend-item"><div class="legend-dot" style="background:#3b82f6"></div>네트워크 포인트</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#aaee00"></div>업타임 포인트</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#8b5cf6"></div>추천 업타임 포인트</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#10b981"></div>업타임 랭크</div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- 플로팅 챗 버튼 -->
+  <div class="chat-float">
+    <!-- 전체 팝업 -->
+    <div class="chat-popup" id="chatPopup">
+      <div class="chat-popup-header">
+        <div class="chat-popup-avatar">🌱</div>
+        <div>
+          <div class="chat-popup-name">새싹이</div>
+          <div class="chat-popup-status">● 온라인 · AI 어시스턴트</div>
+        </div>
+        <button class="chat-popup-close" onclick="toggleChat()">✕</button>
+      </div>
+      <div class="chat-popup-msg">안녕하세요! 저는 새싹이예요 🌱<br/>SeSAC 코인 네트워크에 대해<br/>무엇이든 물어보세요!</div>
+      <a class="chat-popup-input" href="/chat">
+        <span>새싹이에게 물어보세요...</span>
+        <div class="chat-popup-send">
+          <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+        </div>
+      </a>
+    </div>
+
+    <!-- 티저 말풍선 (기본 노출) -->
+    <div class="chat-teaser" id="chatTeaser" onclick="toggleChat()">
+      <span class="teaser-dot"></span>새싹이에게 물어보세요!
+    </div>
+
+    <button class="chat-bubble-btn" onclick="toggleChat()">
+      🌱
+      <span class="notif" id="chatNotif">1</span>
+    </button>
+  </div>
+
+  <!-- 모달 -->
+  <div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+    <div class="modal">
+      <button class="modal-close" onclick="closeModalDirect()">✕</button>
+      <h2 id="modalTitle"></h2>
+      <p id="modalDesc"></p>
+      <div id="modalBody"></div>
+    </div>
+  </div>
+
+  <script>
+    // ── 차트 ──
+    function renderChart() {
+      const svg = document.getElementById("chartSvg");
+      const W = svg.parentElement.clientWidth;
+      const H = 160;
+      const pad = { top: 20, right: 20, bottom: 30, left: 36 };
+      const innerW = W - pad.left - pad.right;
+      const innerH = H - pad.top - pad.bottom;
+
+      const today = new Date();
+      const labels = Array.from({ length: 25 }, (_, i) => {
+        const d = new Date(today);
+        d.setDate(today.getDate() - (24 - i));
+        return `${d.getMonth() + 1}/${d.getDate()}`;
+      });
+
+      // 데모 데이터 (전부 0 → 실제 연동 시 교체)
+      const data = labels.map(() => 0);
+
+      const maxVal = Math.max(...data, 1);
+      const xStep = innerW / (labels.length - 1);
+
+      const points = data.map((v, i) => ({
+        x: pad.left + i * xStep,
+        y: pad.top + innerH - (v / maxVal) * innerH,
+      }));
+
+      const pathD = points.map((p, i) => `${i === 0 ? "M" : "L"}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ");
+      const areaD = pathD + ` L${points[points.length-1].x},${pad.top+innerH} L${points[0].x},${pad.top+innerH} Z`;
+
+      // y축 눈금
+      const yLines = [0, 0.25, 0.5, 0.75, 1].map(r => ({
+        y: pad.top + innerH - r * innerH,
+        val: Math.round(r * maxVal),
+      }));
+
+      svg.innerHTML = `
+        <defs>
+          <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#aaee00" stop-opacity="0.3"/>
+            <stop offset="100%" stop-color="#aaee00" stop-opacity="0.02"/>
+          </linearGradient>
+        </defs>
+        ${yLines.map(l => `
+          <line x1="${pad.left}" y1="${l.y}" x2="${W - pad.right}" y2="${l.y}"
+                stroke="#e5e7db" stroke-width="1"/>
+          <text x="${pad.left - 6}" y="${l.y + 4}" text-anchor="end"
+                font-size="10" fill="#9ca3af">${l.val}</text>
+        `).join("")}
+        <path d="${areaD}" fill="url(#areaGrad)"/>
+        <path d="${pathD}" fill="none" stroke="#aaee00" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+        ${points.map((p, i) => i % 4 === 0 ? `
+          <text x="${p.x}" y="${pad.top + innerH + 18}" text-anchor="middle"
+                font-size="9" fill="#9ca3af">${labels[i]}</text>
+        ` : "").join("")}
+        ${points.map(p => `<circle cx="${p.x}" cy="${p.y}" r="3" fill="#aaee00" stroke="#fff" stroke-width="1.5"/>`).join("")}
+      `;
+    }
+    renderChart();
+    window.addEventListener("resize", renderChart);
+
+    // ── 네트워크 연결 ──
+    let connected = false;
+    function connectNetwork() {
+      connected = !connected;
+      const dot = document.getElementById("statusDot");
+      const text = document.getElementById("statusText");
+      if (connected) {
+        dot.className = "status-dot green";
+        text.textContent = "SeSAC 네트워크에 연결되었습니다. ✓";
+        // 더미 수익 업데이트
+        let total = 0;
+        const timer = setInterval(() => {
+          if (!connected) { clearInterval(timer); return; }
+          total += Math.floor(Math.random() * 3) + 1;
+          document.getElementById("totalEarnings").textContent = total;
+          document.getElementById("todayEarnings").textContent = total;
+        }, 2000);
+      } else {
+        dot.className = "status-dot red";
+        text.textContent = "연결된 네트워크가 없습니다.";
+      }
+    }
+
+    // ── 테마 토글 ──
+    function toggleTheme() {
+      const t = document.getElementById("themeToggle");
+      t.classList.toggle("on");
+      t.classList.toggle("off");
+    }
+
+    // ── 모달 ──
+    const MODALS = {
+      signup: { title: "회원가입", desc: "SeSAC 계정을 만들어 포인트를 저장하세요.", body: `<input class="modal-input" placeholder="이메일"/><input class="modal-input" type="password" placeholder="비밀번호"/><div class="modal-btns"><button class="btn-black" onclick="closeModalDirect()">가입하기</button></div>` },
+      signin: { title: "로그인", desc: "기존 SeSAC 계정으로 로그인하세요.", body: `<input class="modal-input" placeholder="이메일"/><input class="modal-input" type="password" placeholder="비밀번호"/><div class="modal-btns"><button class="btn-black" onclick="closeModalDirect()">로그인</button></div>` },
+      rewards: { title: "🎁 리워드", desc: "로그인 후 이용할 수 있는 리워드 시스템입니다. 포인트를 모아서 다양한 혜택을 받아보세요!", body: `<div class="modal-btns"><button class="btn-black" onclick="showModal('signup')">회원가입하기</button></div>` },
+      store: { title: "🛍 스토어", desc: "SeSAC 포인트로 다양한 아이템을 구매할 수 있어요. 로그인이 필요합니다.", body: `<div class="modal-btns"><button class="btn-black" onclick="showModal('signin')">로그인</button></div>` },
+      download: { title: "⬇ 앱 다운로드", desc: "SeSAC 데스크탑 앱을 설치하면 더 많은 포인트를 얻을 수 있어요.", body: `<div class="modal-btns"><button class="btn-black" onclick="closeModalDirect()">Windows 다운로드</button><button class="btn-white" onclick="closeModalDirect()">Mac 다운로드</button></div>` },
+      install: { title: "💻 앱 설치 가이드", desc: "1. 앱 다운로드 메뉴에서 설치 파일을 받으세요.\n2. 설치 파일을 실행하고 안내에 따라 진행하세요.\n3. 로그인 후 네트워크 연결 버튼을 클릭하세요.", body: `<div class="modal-btns"><button class="btn-black" onclick="closeModalDirect(); document.getElementById('taskCheck').style.background='#aaee00'; document.getElementById('taskCheck').style.borderColor='#8fcc00'">완료 표시</button></div>` },
+      grow: { title: "ℹ 수익 늘리기", desc: "• 데스크탑 앱 설치로 업타임 포인트 2배\n• 친구 초대 시 추천 보너스 지급\n• 매일 접속 시 데일리 보너스 제공\n• 네트워크 안정성 유지 시 랭크 포인트 증가", body: `<div class="modal-btns"><button class="btn-black" onclick="closeModalDirect()">확인</button></div>` },
+      share: { title: "👥 친구와 공유", desc: "아래 추천 링크를 친구에게 공유하세요. 친구가 가입하면 두 분 모두 보너스 포인트를 받아요!", body: `<input class="modal-input" value="https://sesac.example.com/ref/GUEST123" readonly onclick="this.select()"/><div class="modal-btns"><button class="btn-black" onclick="navigator.clipboard.writeText('https://sesac.example.com/ref/GUEST123'); closeModalDirect()">링크 복사</button></div>` },
+      earnings: { title: "💰 수익 상세", desc: "현재 네트워크에 연결되지 않아 수익이 0입니다. 네트워크에 연결하면 자동으로 포인트가 쌓입니다.", body: `<div class="modal-btns"><button class="btn-black" onclick="closeModalDirect(); connectNetwork()">지금 연결하기</button></div>` },
+      points: { title: "🏆 포인트 안내", desc: "🔵 네트워크 포인트: 네트워크 공유량에 비례\n🟢 업타임 포인트: 접속 시간에 비례\n⭐ 추천 보너스: 친구 초대 시 지급", body: `<div class="modal-btns"><button class="btn-black" onclick="closeModalDirect()">확인</button></div>` },
+      help: { title: "🚀 도움말 투어", desc: "SeSAC 대시보드 사용 방법:\n1. 우상단 '회원가입'으로 계정 생성\n2. '네트워크 연결하기' 버튼 클릭\n3. 포인트가 자동으로 누적됨\n4. AI 챗봇으로 무엇이든 질문!", body: `<div class="modal-btns"><button class="btn-black" onclick="closeModalDirect()">시작하기!</button></div>` },
+      profile: { title: "👤 프로필", desc: "현재 게스트 모드로 이용 중입니다. 회원가입하면 포인트가 저장됩니다.", body: `<div class="modal-btns"><button class="btn-black" onclick="showModal('signup')">회원가입</button><button class="btn-white" onclick="showModal('signin')">로그인</button></div>` },
+      about: { title: "🌱 SeSAC 소개", desc: "SeSAC(새싹)은 분산 네트워크 기반의 포인트 적립 플랫폼입니다. 유휴 인터넷 대역폭을 공유하고 SeSAC 포인트를 얻으세요!", body: `<div class="modal-btns"><button class="btn-black" onclick="closeModalDirect()">시작하기</button></div>` },
+      logout: { title: "↩ 로그아웃", desc: "현재 게스트 모드이므로 로그아웃할 계정이 없습니다.", body: `<div class="modal-btns"><button class="btn-black" onclick="closeModalDirect()">확인</button></div>` },
+    };
+
+    function showModal(key) {
+      const m = MODALS[key];
+      if (!m) return;
+      document.getElementById("modalTitle").textContent = m.title;
+      document.getElementById("modalDesc").textContent = m.desc;
+      document.getElementById("modalBody").innerHTML = m.body;
+      document.getElementById("modalOverlay").classList.add("open");
+    }
+    function closeModal(e) {
+      if (e.target === document.getElementById("modalOverlay")) closeModalDirect();
+    }
+    function closeModalDirect() {
+      document.getElementById("modalOverlay").classList.remove("open");
+    }
+    document.addEventListener("keydown", e => { if (e.key === "Escape") { closeModalDirect(); closeChatPopup(); } });
+
+    // ── 플로팅 챗 ──
+    function toggleChat() {
+      const popup   = document.getElementById("chatPopup");
+      const teaser  = document.getElementById("chatTeaser");
+      const notif   = document.getElementById("chatNotif");
+      const isOpen  = popup.classList.contains("open");
+
+      if (isOpen) {
+        popup.classList.remove("open");
+        teaser.classList.remove("hidden");
+      } else {
+        popup.classList.add("open");
+        teaser.classList.add("hidden");
+        if (notif) notif.style.display = "none";
+      }
+    }
+    function closeChatPopup() {
+      document.getElementById("chatPopup").classList.remove("open");
+      document.getElementById("chatTeaser").classList.remove("hidden");
+    }
+  </script>
+</body>
+</html>
